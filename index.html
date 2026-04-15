@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DARKXOSINT – API Gateway</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#04040a;--bg2:#080812;--card:#0c0c18;--card2:#10101e;
+  --border:#1c1c35;--b2:#2a2a4a;
+  --cyan:#00eeff;--purple:#8b5cf6;--pink:#f059c8;
+  --green:#00ff99;--yellow:#ffcc00;--red:#ff3355;
+  --text:#dde0ff;--muted:#6668aa;--dim:#3a3a60;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+#bg-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;opacity:.35;}
+.scanline{position:fixed;top:0;left:0;right:0;bottom:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,238,255,.007) 3px,rgba(0,238,255,.007) 4px);pointer-events:none;z-index:9998;}
+
+/* ---- LOGIN ---- */
+#login-page{position:relative;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:20px;}
+.lg-orb{position:absolute;width:480px;height:480px;border-radius:50%;background:radial-gradient(circle,rgba(139,92,246,.13),transparent 70%);animation:orb-pulse 4s ease-in-out infinite;pointer-events:none;}
+@keyframes orb-pulse{0%,100%{transform:scale(1);opacity:.5;}50%{transform:scale(1.12);opacity:1;}}
+.lg-card{width:100%;max-width:420px;background:linear-gradient(150deg,rgba(12,12,24,.97),rgba(8,8,18,.97));border:1px solid var(--b2);position:relative;overflow:hidden;animation:card-rise .5s ease forwards;}
+@keyframes card-rise{from{opacity:0;transform:translateY(24px);}to{opacity:1;transform:translateY(0);}}
+.lg-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),var(--purple),var(--pink),transparent);animation:border-sweep 3s linear infinite;background-size:200%;}
+@keyframes border-sweep{0%{background-position:200%;}100%{background-position:-200%;}}
+.lg-inner{padding:38px 34px 32px;}
+.lg-brand{text-align:center;margin-bottom:28px;}
+.lg-hex{width:62px;height:62px;margin:0 auto 12px;background:linear-gradient(135deg,var(--purple),var(--cyan));clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);display:flex;align-items:center;justify-content:center;font-size:26px;animation:hue-spin 8s linear infinite;}
+@keyframes hue-spin{0%{filter:hue-rotate(0deg);}100%{filter:hue-rotate(360deg);}}
+.lg-brand h1{font-family:'Orbitron',monospace;font-size:20px;font-weight:900;letter-spacing:4px;background:linear-gradient(90deg,var(--cyan),var(--purple),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-size:200%;animation:shimmer 3s linear infinite;}
+@keyframes shimmer{0%{background-position:0%;}100%{background-position:200%;}}
+.lg-brand p{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:2px;margin-top:3px;}
+.role-tabs{display:flex;border:1px solid var(--b2);margin-bottom:20px;}
+.rtab{flex:1;padding:10px;text-align:center;cursor:pointer;font-family:'Orbitron',monospace;font-size:10px;font-weight:700;letter-spacing:1px;color:var(--muted);border:none;background:transparent;transition:all .3s;}
+.rtab.active{background:linear-gradient(135deg,rgba(139,92,246,.18),rgba(0,238,255,.08));color:var(--cyan);}
+.lg-err{display:none;padding:9px 13px;margin-bottom:12px;background:rgba(255,51,85,.08);border:1px solid rgba(255,51,85,.25);border-left:3px solid var(--red);font-size:12px;color:var(--red);font-family:'Share Tech Mono',monospace;}
+.iw{margin-bottom:16px;}
+.il{display:block;font-size:10px;font-weight:700;letter-spacing:2px;color:var(--cyan);text-transform:uppercase;margin-bottom:6px;}
+.ii{width:100%;background:rgba(0,238,255,.03);border:1px solid var(--b2);border-left:3px solid var(--cyan);color:var(--text);padding:11px 13px;font-family:'Share Tech Mono',monospace;font-size:13px;outline:none;transition:all .3s;}
+.ii:focus{background:rgba(0,238,255,.07);border-color:var(--cyan);box-shadow:0 0 18px rgba(0,238,255,.1);}
+.ii::placeholder{color:var(--muted);}
+.lg-btn{width:100%;padding:14px;border:none;background:linear-gradient(135deg,var(--purple),var(--cyan));color:#000;font-family:'Orbitron',monospace;font-size:11px;font-weight:900;letter-spacing:3px;cursor:pointer;transition:all .3s;position:relative;overflow:hidden;clip-path:polygon(10px 0%,100% 0%,calc(100% - 10px) 100%,0% 100%);}
+.lg-btn::after{content:'';position:absolute;top:-50%;left:-60%;width:40%;height:200%;background:rgba(255,255,255,.13);transform:skewX(-20deg);transition:.5s;}
+.lg-btn:hover::after{left:120%;}
+.lg-btn:hover{box-shadow:0 0 32px rgba(0,238,255,.3),0 0 55px rgba(139,92,246,.18);}
+.lg-foot{text-align:center;margin-top:16px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px;}
+
+/* ---- APP ---- */
+#app{display:none;}
+.sidebar{position:fixed;top:0;left:0;bottom:0;width:228px;background:linear-gradient(180deg,rgba(8,8,20,.98),rgba(4,4,10,.98));border-right:1px solid var(--border);z-index:200;display:flex;flex-direction:column;transition:transform .3s;}
+.sb-head{padding:20px 16px 16px;border-bottom:1px solid var(--border);}
+.sb-logo{font-family:'Orbitron',monospace;font-size:13px;font-weight:900;letter-spacing:2px;background:linear-gradient(90deg,var(--cyan),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.sb-sub{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);margin-top:2px;letter-spacing:1px;}
+.sb-user{margin-top:9px;padding:6px 10px;background:rgba(0,238,255,.05);border:1px solid rgba(0,238,255,.1);font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--cyan);}
+.sb-sec{padding:7px 0;border-bottom:1px solid var(--border);}
+.sb-lbl{padding:5px 16px 2px;font-size:9px;letter-spacing:2px;color:var(--dim);font-weight:700;text-transform:uppercase;}
+.ni{display:flex;align-items:center;gap:9px;padding:9px 16px;cursor:pointer;color:var(--muted);font-size:13px;font-weight:600;letter-spacing:.3px;border-left:3px solid transparent;transition:all .2s;}
+.ni:hover,.ni.active{color:var(--cyan);background:rgba(0,238,255,.04);border-left-color:var(--cyan);}
+.ni-icon{font-size:14px;width:17px;flex-shrink:0;}
+.sb-foot{margin-top:auto;padding:13px 16px;border-top:1px solid var(--border);}
+.sb-ver{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--dim);margin-bottom:7px;}
+.topbar{position:fixed;top:0;left:228px;right:0;height:56px;background:rgba(4,4,10,.96);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:12px;z-index:100;backdrop-filter:blur(12px);}
+.tb-title{font-family:'Orbitron',monospace;font-size:12px;font-weight:700;color:var(--text);letter-spacing:1px;}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
+.tb-status{display:flex;align-items:center;gap:6px;padding:3px 11px;background:rgba(0,255,153,.07);border:1px solid rgba(0,255,153,.18);font-size:10px;color:var(--green);font-weight:700;letter-spacing:1px;}
+.pdot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pdot 2s ease-in-out infinite;}
+@keyframes pdot{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(0,255,153,.4);}50%{opacity:.4;box-shadow:0 0 0 4px rgba(0,255,153,0);}}
+.kv-pill{padding:3px 9px;font-size:9px;font-family:'Share Tech Mono',monospace;letter-spacing:1px;text-transform:uppercase;}
+.kv-on{background:rgba(0,255,153,.1);color:var(--green);border:1px solid rgba(0,255,153,.25);}
+.kv-off{background:rgba(255,204,0,.1);color:var(--yellow);border:1px solid rgba(255,204,0,.25);}
+.content{margin-left:228px;margin-top:56px;padding:22px;}
+.page{display:none;animation:pg-in .3s ease;}
+.page.active{display:block;}
+@keyframes pg-in{from{opacity:0;transform:translateY(7px);}to{opacity:1;transform:translateY(0);}}
+
+/* ---- STATS ---- */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:22px;}
+.stat{background:var(--card);border:1px solid var(--border);padding:17px;position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s;cursor:default;}
+.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--sc,var(--cyan));}
+.stat:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(0,0,0,.4);}
+.stat-n{font-family:'Orbitron',monospace;font-size:26px;font-weight:900;color:var(--sc,var(--cyan));line-height:1;}
+.stat-l{font-size:10px;letter-spacing:2px;color:var(--muted);margin-top:4px;text-transform:uppercase;font-weight:600;}
+.stat-s{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--dim);margin-top:6px;}
+.stat-glow{position:absolute;bottom:-12px;right:-12px;width:60px;height:60px;border-radius:50%;background:radial-gradient(circle,rgba(0,238,255,.05),transparent);}
+
+/* ---- SECTION HEADER ---- */
+.sec-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px;}
+.sec-t{font-family:'Orbitron',monospace;font-size:12px;font-weight:700;letter-spacing:1px;color:var(--text);display:flex;align-items:center;gap:7px;}
+.sec-t::before{content:'';width:3px;height:13px;background:linear-gradient(180deg,var(--cyan),var(--purple));}
+
+/* ---- TABLE ---- */
+.tbl{background:var(--card);border:1px solid var(--border);overflow:hidden;margin-bottom:20px;}
+table{width:100%;border-collapse:collapse;}
+th{padding:8px 13px;text-align:left;font-size:9px;letter-spacing:2px;color:var(--muted);border-bottom:1px solid var(--border);font-weight:700;text-transform:uppercase;background:rgba(0,0,0,.3);}
+td{padding:10px 13px;border-bottom:1px solid rgba(28,28,53,.5);font-size:13px;vertical-align:middle;}
+tr:hover td{background:rgba(0,238,255,.015);}
+tr:last-child td{border-bottom:none;}
+
+/* ---- CARD ---- */
+.card{background:var(--card);border:1px solid var(--border);padding:17px;margin-bottom:13px;}
+
+/* ---- FORM ---- */
+.fg{margin-bottom:14px;}
+.fl{display:block;font-size:9px;font-weight:700;letter-spacing:2px;color:var(--cyan);text-transform:uppercase;margin-bottom:6px;}
+.fi,.fs,.ft{width:100%;background:rgba(0,238,255,.03);border:1px solid var(--b2);border-left:3px solid var(--b2);color:var(--text);padding:9px 11px;font-family:'Share Tech Mono',monospace;font-size:12px;outline:none;transition:all .3s;}
+.fi:focus,.fs:focus,.ft:focus{border-color:var(--cyan);border-left-color:var(--cyan);background:rgba(0,238,255,.05);box-shadow:0 0 10px rgba(0,238,255,.08);}
+.fi::placeholder,.ft::placeholder{color:var(--muted);}
+.fs option{background:var(--card);}
+.ft{resize:vertical;min-height:70px;}
+.fhint{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);margin-top:3px;}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:13px;}
+.fg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:13px;}
+
+/* ---- TOGGLE ---- */
+.tog-row{display:flex;align-items:center;justify-content:space-between;padding:10px 13px;border:1px solid var(--border);background:rgba(0,0,0,.18);margin-bottom:7px;transition:background .2s;}
+.tog-row:hover{background:rgba(0,238,255,.025);}
+.tog-info h4{font-size:13px;font-weight:600;color:var(--text);}
+.tog-info p{font-size:11px;color:var(--muted);margin-top:1px;}
+.toggle{position:relative;width:42px;height:23px;flex-shrink:0;}
+.toggle input{opacity:0;width:0;height:0;}
+.tsl{position:absolute;inset:0;background:var(--b2);cursor:pointer;transition:.3s;}
+.tsl:before{content:'';position:absolute;height:15px;width:15px;left:4px;bottom:4px;background:var(--muted);transition:.3s;}
+.toggle input:checked+.tsl{background:linear-gradient(90deg,var(--cyan),var(--purple));}
+.toggle input:checked+.tsl:before{transform:translateX(19px);background:#fff;}
+
+/* ---- BUTTONS ---- */
+.btn-p{padding:9px 18px;border:none;background:linear-gradient(135deg,var(--purple),var(--cyan));color:#000;font-family:'Orbitron',monospace;font-size:10px;font-weight:900;letter-spacing:2px;cursor:pointer;transition:all .3s;clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);}
+.btn-p:hover{box-shadow:0 0 22px rgba(0,238,255,.28);transform:translateY(-1px);}
+.btn-g{padding:8px 15px;border:1px solid var(--b2);background:transparent;color:var(--muted);font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;letter-spacing:.5px;}
+.btn-g:hover{border-color:var(--red);color:var(--red);}
+.ib{padding:4px 9px;border:1px solid;background:transparent;cursor:pointer;font-size:11px;font-weight:700;font-family:'Rajdhani',sans-serif;transition:all .2s;letter-spacing:.3px;}
+.ib-c{border-color:rgba(0,238,255,.3);color:var(--cyan);}  .ib-c:hover{background:rgba(0,238,255,.08);}
+.ib-y{border-color:rgba(255,204,0,.3);color:var(--yellow);}  .ib-y:hover{background:rgba(255,204,0,.08);}
+.ib-r{border-color:rgba(255,51,85,.3);color:var(--red);}    .ib-r:hover{background:rgba(255,51,85,.08);}
+.ib-p{border-color:rgba(139,92,246,.3);color:var(--purple);} .ib-p:hover{background:rgba(139,92,246,.08);}
+.ib-g{border-color:rgba(0,255,153,.3);color:var(--green);}  .ib-g:hover{background:rgba(0,255,153,.08);}
+.act-r{display:flex;gap:4px;flex-wrap:wrap;}
+
+/* ---- BADGES ---- */
+.bdg{display:inline-block;padding:2px 7px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;}
+.bdg-on{background:rgba(0,255,153,.1);color:var(--green);border:1px solid rgba(0,255,153,.22);}
+.bdg-off{background:rgba(255,51,85,.1);color:var(--red);border:1px solid rgba(255,51,85,.22);}
+.bdg-cy{background:rgba(0,238,255,.1);color:var(--cyan);border:1px solid rgba(0,238,255,.22);}
+.bdg-pu{background:rgba(139,92,246,.1);color:var(--purple);border:1px solid rgba(139,92,246,.22);}
+.bdg-ye{background:rgba(255,204,0,.1);color:var(--yellow);border:1px solid rgba(255,204,0,.22);}
+
+/* ---- API CARD ---- */
+.api-card{background:var(--card);border:1px solid var(--border);border-left:3px solid var(--cyan);padding:15px;margin-bottom:9px;transition:all .22s;position:relative;overflow:hidden;}
+.api-card:hover{border-color:rgba(0,238,255,.3);box-shadow:0 4px 18px rgba(0,0,0,.4);}
+.api-card.off{border-left-color:var(--red);}
+.api-card::after{content:'';position:absolute;top:0;right:0;width:70px;height:70px;background:radial-gradient(circle,rgba(0,238,255,.03),transparent);pointer-events:none;}
+.api-name{font-family:'Orbitron',monospace;font-weight:700;font-size:14px;color:var(--text);}
+.url-box{display:flex;align-items:center;gap:7px;background:rgba(0,238,255,.04);border:1px solid rgba(0,238,255,.09);padding:6px 11px;margin:7px 0;cursor:pointer;transition:background .2s;word-break:break-all;}
+.url-box:hover{background:rgba(0,238,255,.09);}
+.url-box span{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--cyan);flex:1;}
+.url-box .ci{font-size:13px;flex-shrink:0;color:var(--muted);}
+.api-meta{display:flex;gap:13px;flex-wrap:wrap;margin-top:5px;}
+.api-meta span{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);}
+
+/* ---- KEY BOX ---- */
+.key-box{background:rgba(139,92,246,.06);border:1px solid rgba(139,92,246,.2);padding:9px 13px;font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--purple);word-break:break-all;letter-spacing:1px;}
+
+/* ---- MODAL ---- */
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:1000;backdrop-filter:blur(6px);align-items:center;justify-content:center;}
+.modal-ov.open{display:flex;}
+.modal{background:var(--card2);border:1px solid var(--b2);border-top:2px solid var(--cyan);width:550px;max-width:95vw;max-height:90vh;overflow-y:auto;padding:24px;position:relative;animation:m-in .22s ease;}
+@keyframes m-in{from{opacity:0;transform:scale(.95);}to{opacity:1;transform:scale(1);}}
+.modal h2{font-family:'Orbitron',monospace;font-size:13px;font-weight:700;letter-spacing:1px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;}
+.mx{background:none;border:none;color:var(--muted);font-size:17px;cursor:pointer;line-height:1;}
+.mx:hover{color:var(--red);}
+
+/* ---- TOAST ---- */
+.toast{position:fixed;top:65px;right:16px;padding:10px 16px;z-index:9000;border-left:3px solid var(--green);background:rgba(0,255,153,.07);font-size:13px;font-weight:600;color:var(--green);animation:t-in .3s ease,t-out .4s 2.6s forwards;font-family:'Rajdhani',sans-serif;backdrop-filter:blur(8px);pointer-events:none;}
+.toast.err{border-left-color:var(--red);background:rgba(255,51,85,.07);color:var(--red);}
+@keyframes t-in{from{transform:translateX(100%);opacity:0;}to{transform:translateX(0);opacity:1;}}
+@keyframes t-out{from{opacity:1;}to{opacity:0;transform:translateX(8px);}}
+
+/* ---- LOG ---- */
+.log-box{background:rgba(0,0,0,.38);border:1px solid var(--border);padding:11px;font-family:'Share Tech Mono',monospace;font-size:11px;max-height:170px;overflow-y:auto;line-height:1.9;}
+
+/* ---- PROG ---- */
+.prog{background:var(--border);height:4px;}
+.prog-f{height:4px;background:linear-gradient(90deg,var(--purple),var(--cyan));transition:width 1s ease;}
+
+/* ---- USER CARD ---- */
+.u-card{background:var(--card);border:1px solid var(--border);padding:13px 15px;margin-bottom:7px;display:flex;align-items:center;gap:13px;flex-wrap:wrap;}
+.u-av{width:37px;height:37px;flex-shrink:0;background:linear-gradient(135deg,var(--purple),var(--cyan));clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-size:14px;font-weight:900;color:#000;}
+.u-info{flex:1;min-width:0;}
+.u-name{font-size:14px;font-weight:700;}
+.u-meta{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);margin-top:2px;}
+
+/* ---- BARS ---- */
+.bar-item{margin-bottom:9px;}
+.bar-h{display:flex;justify-content:space-between;margin-bottom:3px;}
+.bar-n{font-size:12px;font-weight:600;}
+.bar-v{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--cyan);}
+
+/* ---- ADV BOX ---- */
+.adv-box{border:1px solid var(--border);padding:16px;margin-bottom:14px;background:rgba(0,0,0,.22);}
+.adv-t{font-family:'Orbitron',monospace;font-size:11px;font-weight:700;color:var(--purple);margin-bottom:13px;letter-spacing:1px;}
+
+/* ---- SEARCH ---- */
+.srch{background:rgba(0,238,255,.03);border:1px solid var(--b2);border-left:3px solid var(--purple);color:var(--text);padding:7px 12px;font-family:'Share Tech Mono',monospace;font-size:11px;outline:none;min-width:175px;}
+.srch::placeholder{color:var(--muted);}
+.top-act{display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap;}
+
+@media(max-width:768px){
+  .stats-row{grid-template-columns:1fr 1fr;}
+  .sidebar{transform:translateX(-100%);}
+  .sidebar.open{transform:translateX(0);}
+  .content,.topbar{margin-left:0;left:0;}
+  .fg2,.fg3{grid-template-columns:1fr;}
+}
+@keyframes copy-flash{0%,100%{background:rgba(0,238,255,.04);}50%{background:rgba(0,238,255,.14);}}
+.copying{animation:copy-flash .3s ease;}
+</style>
+</head>
+<body>
+<canvas id="bg-canvas"></canvas>
+<div class="scanline"></div>
+
+<!-- ====== LOGIN ====== -->
+<div id="login-page">
+  <div class="lg-orb"></div>
+  <div class="lg-card">
+    <div class="lg-inner">
+      <div class="lg-brand">
+        <div class="lg-hex">⚡</div>
+        <h1>DARKXOSINT</h1>
+        <p>ADVANCED API GATEWAY &amp; MASKING PANEL v2.1</p>
+      </div>
+      <div class="role-tabs">
+        <button class="rtab active" id="tab-admin" onclick="setRole('admin')">👑 ADMIN</button>
+        <button class="rtab" id="tab-user" onclick="setRole('user')">👤 USER</button>
+      </div>
+      <div class="lg-err" id="lg-err"></div>
+      <div class="iw">
+        <label class="il">Access Passkey</label>
+        <input type="password" class="ii" id="lkey" placeholder="Enter passkey..." autocomplete="off">
+      </div>
+      <button class="lg-btn" onclick="doLogin()">⚡ ACCESS DASHBOARD</button>
+      <div class="lg-foot">🔒 SECURE &nbsp;•&nbsp; 🕐 SESSION &nbsp;•&nbsp; ⚡ @CYBERXYLUS</div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== MAIN APP ====== -->
+<div id="app">
+  <nav class="sidebar" id="sidebar">
+    <div class="sb-head">
+      <div class="sb-logo">⚡ DARKXOSINT</div>
+      <div class="sb-sub">API GATEWAY v2.1</div>
+      <div class="sb-user" id="sb-user">👑 ADMIN</div>
+    </div>
+    <div class="sb-sec">
+      <div class="sb-lbl">Dashboard</div>
+      <div class="ni active" data-page="overview" onclick="nav(this)"><span class="ni-icon">📊</span>Overview</div>
+      <div class="ni" data-page="apis" onclick="nav(this)"><span class="ni-icon">🔌</span>My APIs</div>
+      <div class="ni" data-page="create" onclick="nav(this)"><span class="ni-icon">➕</span>Create API</div>
+      <div class="ni" data-page="analytics" onclick="nav(this)"><span class="ni-icon">📈</span>Analytics</div>
+    </div>
+    <div class="sb-sec" id="admin-nav">
+      <div class="sb-lbl">Admin</div>
+      <div class="ni" data-page="users" onclick="nav(this)"><span class="ni-icon">👥</span>Users &amp; Keys</div>
+      <div class="ni" data-page="base-apis" onclick="nav(this)"><span class="ni-icon">🏗</span>Base APIs</div>
+      <div class="ni" data-page="settings" onclick="nav(this)"><span class="ni-icon">⚙</span>Settings</div>
+    </div>
+    <div class="sb-foot">
+      <div class="sb-ver">// v2.1 by @CyberXylus</div>
+      <button class="btn-g" style="width:100%" onclick="doLogout()">⏻ Logout</button>
+    </div>
+  </nav>
+
+  <header class="topbar">
+    <div class="tb-title" id="tb-title">System Overview</div>
+    <div class="tb-right">
+      <div class="tb-status"><div class="pdot"></div>ALL SYSTEMS ONLINE</div>
+      <span id="kv-ind" class="kv-pill kv-off">KV: LOCAL</span>
+      <button class="btn-g" onclick="doLogout()">⏻ Logout</button>
+    </div>
+  </header>
+
+  <main class="content">
+
+    <!-- OVERVIEW -->
+    <div class="page active" id="page-overview">
+      <div class="stats-row">
+        <div class="stat" style="--sc:var(--cyan)"><div class="stat-n" id="s-a">0</div><div class="stat-l">Total APIs</div><div class="stat-s" id="s-as">—</div><div class="stat-glow"></div></div>
+        <div class="stat" style="--sc:var(--purple)"><div class="stat-n" id="s-r">0</div><div class="stat-l">Total Requests</div><div class="stat-s" id="s-rs">—</div><div class="stat-glow"></div></div>
+        <div class="stat" style="--sc:var(--green)"><div class="stat-n" id="s-sr">0%</div><div class="stat-l">Success Rate</div><div class="stat-s">24h</div><div class="stat-glow"></div></div>
+        <div class="stat" style="--sc:var(--yellow)"><div class="stat-n" id="s-u">0</div><div class="stat-l">Active Users</div><div class="stat-s">Keys issued</div><div class="stat-glow"></div></div>
+      </div>
+      <div class="sec-h"><div class="sec-t">Recent APIs</div><button class="btn-g" onclick="renderOV()">↺ Refresh</button></div>
+      <div class="tbl"><table><thead><tr><th>Name</th><th>Full Endpoint URL</th><th>Reqs</th><th>Success</th><th>Status</th></tr></thead><tbody id="ov-tb"></tbody></table></div>
+      <div class="sec-h"><div class="sec-t">System Log</div></div>
+      <div class="log-box" id="log-box"><span style="color:var(--green)">[BOOT] DARKXOSINT v2.1 ready</span></div>
+    </div>
+
+    <!-- MY APIS -->
+    <div class="page" id="page-apis">
+      <div class="top-act">
+        <button class="btn-p" onclick="navTo('create')">➕ New API</button>
+        <input type="text" class="srch" placeholder="Search APIs..." oninput="searchAPIs(this.value)">
+        <span style="margin-left:auto;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted)" id="api-lbl"></span>
+      </div>
+      <div id="apis-list"></div>
+    </div>
+
+    <!-- CREATE API -->
+    <div class="page" id="page-create">
+      <div class="card">
+        <div style="font-family:'Orbitron',monospace;font-size:14px;font-weight:700;color:var(--cyan);margin-bottom:18px">➕ Create New API</div>
+        <div class="fg2">
+          <div class="fg"><label class="fl">API Name</label><input class="fi" id="c-name" placeholder="e.g. Phone Lookup"></div>
+          <div class="fg"><label class="fl">Endpoint Slug</label><input class="fi" id="c-ep" placeholder="e.g. phone-lookup"></div>
+        </div>
+        <div class="fg"><label class="fl">Parameter Name</label><input class="fi" id="c-param" placeholder="number, id, username"></div>
+        <div class="fg" id="base-sel-wrap" style="display:none">
+          <label class="fl">Use Base API</label>
+          <select class="fs" id="c-base"><option value="">— Or use custom URL —</option></select>
+        </div>
+        <div class="fg">
+          <label class="fl">Base URL <span style="color:var(--muted);text-transform:none;letter-spacing:0">(your upstream API URL)</span></label>
+          <input class="fi" id="c-url" placeholder="https://api.example.com/?key=SECRET&q=">
+          <div class="fhint">Parameter value is auto-appended to the end of this URL</div>
+        </div>
+        <div class="fg3">
+          <div class="fg"><label class="fl">Rate Limit / Hour</label><input class="fi" id="c-rate" placeholder="1000" type="number"></div>
+          <div class="fg"><label class="fl">Daily Limit</label><input class="fi" id="c-daily" placeholder="0 = unlimited" type="number"></div>
+          <div class="fg"><label class="fl">Cache TTL (sec)</label><input class="fi" id="c-cache" placeholder="300" type="number"></div>
+        </div>
+        <div class="adv-box">
+          <div class="adv-t">⚙ Advanced Settings</div>
+          <div class="tog-row">
+            <div class="tog-info"><h4>🔁 Replace Credit Fields</h4><p>Replace owner/credit/author fields with your brand</p></div>
+            <label class="toggle"><input type="checkbox" id="c-rep" onchange="togShow('c-rep-opts',this.checked)"><span class="tsl"></span></label>
+          </div>
+          <div id="c-rep-opts" style="display:none;padding:8px 0 2px">
+            <div class="fg2">
+              <div class="fg"><label class="fl">Fields to Replace</label><input class="fi" id="c-rf" placeholder="owner, credits, author"></div>
+              <div class="fg"><label class="fl">Replace With</label><input class="fi" id="c-rv" placeholder="@CyberXylus"></div>
+            </div>
+          </div>
+          <div class="tog-row">
+            <div class="tog-info"><h4>⚡ Show "API Powered by @CyberXylus"</h4><p>Append powered_by tag to all responses</p></div>
+            <label class="toggle"><input type="checkbox" id="c-pw" checked><span class="tsl"></span></label>
+          </div>
+          <div class="tog-row">
+            <div class="tog-info"><h4>🙈 Hide Fields</h4><p>Remove specific fields from responses</p></div>
+            <label class="toggle"><input type="checkbox" id="c-hf" onchange="togShow('c-hf-opts',this.checked)"><span class="tsl"></span></label>
+          </div>
+          <div id="c-hf-opts" style="display:none;padding:8px 0 2px">
+            <div class="fg"><label class="fl">Fields to Hide (comma separated)</label><input class="fi" id="c-hfv" placeholder="debug_id, internal_key"></div>
+          </div>
+          <div class="fg" style="margin-top:10px">
+            <label class="fl">Disabled Message</label>
+            <textarea class="ft" id="c-dm" placeholder="This API is currently unavailable."></textarea>
+          </div>
+        </div>
+        <div style="display:flex;gap:9px">
+          <button class="btn-p" onclick="createAPI()">✓ Create API</button>
+          <button class="btn-g" onclick="navTo('apis')">← Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ANALYTICS -->
+    <div class="page" id="page-analytics">
+      <div class="stats-row" style="grid-template-columns:repeat(3,1fr)">
+        <div class="stat" style="--sc:var(--cyan)"><div class="stat-n" id="an-t">0</div><div class="stat-l">Total Requests</div><div class="stat-glow"></div></div>
+        <div class="stat" style="--sc:var(--green)"><div class="stat-n" id="an-s">0</div><div class="stat-l">Successful</div><div class="stat-glow"></div></div>
+        <div class="stat" style="--sc:var(--red)"><div class="stat-n" id="an-f">0</div><div class="stat-l">Failed</div><div class="stat-glow"></div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:13px">
+        <div class="card"><div class="sec-t" style="margin-bottom:13px">API Usage</div><div id="an-bars"></div></div>
+        <div class="card"><div class="sec-t" style="margin-bottom:13px">Activity Log</div><div class="log-box" id="an-log" style="max-height:230px"></div></div>
+      </div>
+    </div>
+
+    <!-- USERS -->
+    <div class="page" id="page-users">
+      <div class="top-act"><button class="btn-p" onclick="openModal('m-user')">➕ Create Access Key</button></div>
+      <div id="users-list"></div>
+    </div>
+
+    <!-- BASE APIS -->
+    <div class="page" id="page-base-apis">
+      <div class="top-act"><button class="btn-p" onclick="openModal('m-base')">➕ Add Base API</button></div>
+      <div class="card" style="margin-bottom:13px;border-left:3px solid var(--yellow)">
+        <span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--yellow)">⚠ Base API URLs are PRIVATE — users can build on them but cannot see the real URL.</span>
+      </div>
+      <div id="base-list"></div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="page" id="page-settings">
+      <div class="card" style="border-left:3px solid var(--cyan);margin-bottom:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:9px">
+          <div>
+            <div style="font-family:'Orbitron',monospace;font-size:12px;font-weight:700;color:var(--cyan);margin-bottom:3px">🌐 Vercel KV Storage</div>
+            <div id="kv-st-text" style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted)">Status: Using localStorage (browser-only)</div>
+          </div>
+          <span id="kv-st-badge" class="kv-pill kv-off">NOT CONNECTED</span>
+        </div>
+        <div style="margin-top:9px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--dim)">
+          Set <span style="color:var(--cyan)">KV_REST_API_URL</span> &amp; <span style="color:var(--cyan)">KV_REST_API_TOKEN</span> in Vercel Environment Variables to enable persistent cloud storage.
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:13px">
+        <div>
+          <div class="card">
+            <div style="font-family:'Orbitron',monospace;font-size:12px;color:var(--purple);margin-bottom:13px">🏷 Branding</div>
+            <div class="fg"><label class="fl">Panel Name</label><input class="fi" id="st-nm" value="DARKXOSINT"></div>
+            <div class="fg"><label class="fl">Owner Username</label><input class="fi" id="st-ow" value="@CyberXylus"></div>
+            <div class="fg"><label class="fl">Powered-By Tag</label><input class="fi" id="st-pw" value="API Powered By @CyberXylus"></div>
+            <button class="btn-p" onclick="saveSettings()">Save Settings</button>
+          </div>
+        </div>
+        <div>
+          <div class="card">
+            <div style="font-family:'Orbitron',monospace;font-size:12px;color:var(--cyan);margin-bottom:13px">🔑 Admin Passkey</div>
+            <div class="fg"><label class="fl">Current Passkey</label><input type="password" class="fi" id="st-cp" placeholder="Current passkey"></div>
+            <div class="fg"><label class="fl">New Passkey</label><input type="password" class="fi" id="st-np" placeholder="New passkey"></div>
+            <button class="btn-p" onclick="changePass()">Update Passkey</button>
+          </div>
+          <div class="card" style="margin-top:13px">
+            <div style="font-family:'Orbitron',monospace;font-size:12px;color:var(--green);margin-bottom:9px">📊 System Info</div>
+            <div style="font-family:'Share Tech Mono',monospace;font-size:11px;line-height:2.1;color:var(--muted)">
+              Panel: <span style="color:var(--cyan)">DARKXOSINT v2.1</span><br>
+              Owner: <span style="color:var(--cyan)">@CyberXylus</span><br>
+              Storage: <span id="st-stg" style="color:var(--cyan)">localStorage</span><br>
+              Host: <span id="st-host" style="color:var(--cyan)">—</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ====== MODALS ====== -->
+<div class="modal-ov" id="m-user">
+  <div class="modal">
+    <h2>👥 Create Access Key <button class="mx" onclick="closeModal('m-user')">✕</button></h2>
+    <div class="fg2">
+      <div class="fg"><label class="fl">Username</label><input class="fi" id="u-name" placeholder="user123"></div>
+      <div class="fg">
+        <label class="fl">Key Type</label>
+        <select class="fs" id="u-kt" onchange="onKT()">
+          <option value="r5">Random Short (5 chars)</option>
+          <option value="rl">Random Long (full key)</option>
+          <option value="cx">Custom Key</option>
+        </select>
+      </div>
+    </div>
+    <div class="fg" id="u-cw" style="display:none"><label class="fl">Custom Key</label><input class="fi" id="u-ck" placeholder="Enter custom key"></div>
+    <div class="fg2">
+      <div class="fg">
+        <label class="fl">Plan Type</label>
+        <select class="fs" id="u-plan" onchange="onPT()">
+          <option value="monthly">Monthly (30 days)</option>
+          <option value="days">Custom Days</option>
+          <option value="hits">Per Hits</option>
+          <option value="lifetime">Lifetime</option>
+        </select>
+      </div>
+      <div class="fg" id="u-dw">
+        <label class="fl">Duration (days)</label>
+        <input class="fi" id="u-dur" placeholder="30" type="number" value="30">
+      </div>
+    </div>
+    <div class="fg" id="u-hw" style="display:none"><label class="fl">Total Hits Allowed</label><input class="fi" id="u-hits" placeholder="1000" type="number"></div>
+    <div class="fg"><label class="fl">Daily Limit <span style="color:var(--muted);text-transform:none;letter-spacing:0">(0 = unlimited)</span></label><input class="fi" id="u-dl" placeholder="0" type="number" value="0"></div>
+    <div class="tog-row" style="margin-bottom:14px">
+      <div class="tog-info"><h4>Allow using Base APIs</h4><p>User can build APIs from your private base URLs</p></div>
+      <label class="toggle"><input type="checkbox" id="u-base" checked><span class="tsl"></span></label>
+    </div>
+    <div style="display:flex;gap:9px">
+      <button class="btn-p" onclick="createUser()">✓ Create</button>
+      <button class="btn-g" onclick="closeModal('m-user')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-ov" id="m-base">
+  <div class="modal">
+    <h2>🏗 Add Base API <button class="mx" onclick="closeModal('m-base')">✕</button></h2>
+    <div class="fg"><label class="fl">Name</label><input class="fi" id="ba-n" placeholder="Phone Lookup Pro"></div>
+    <div class="fg"><label class="fl">ID / Slug</label><input class="fi" id="ba-i" placeholder="phone-lookup"></div>
+    <div class="fg"><label class="fl">🔒 Private URL (users cannot see this)</label><input class="fi" id="ba-u" placeholder="https://private-api.com/?key=SECRET&q="></div>
+    <div class="fg"><label class="fl">Description (shown to users)</label><input class="fi" id="ba-d" placeholder="Phone number lookup service"></div>
+    <div class="fg"><label class="fl">Parameter Name</label><input class="fi" id="ba-p" placeholder="number"></div>
+    <div style="display:flex;gap:9px">
+      <button class="btn-p" onclick="addBase()">✓ Add</button>
+      <button class="btn-g" onclick="closeModal('m-base')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-ov" id="m-key">
+  <div class="modal">
+    <h2>🔑 API Key Info <button class="mx" onclick="closeModal('m-key')">✕</button></h2>
+    <div id="m-key-body"></div>
+  </div>
+</div>
+
+<script>
+// ======================================================
+// PARTICLE BG
+// ======================================================
+(()=>{
+  const c=document.getElementById('bg-canvas'),ctx=c.getContext('2d');
+  let W,H;
+  const resize=()=>{W=c.width=window.innerWidth;H=c.height=window.innerHeight;};
+  resize();window.addEventListener('resize',resize);
+  const pts=Array.from({length:55},()=>({x:Math.random()*1920,y:Math.random()*1080,vx:(Math.random()-.5)*.25,vy:(Math.random()-.5)*.25,r:Math.random()*1.4+.4}));
+  const draw=()=>{
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='rgba(0,238,255,.5)';
+    pts.forEach(p=>{
+      p.x+=p.vx;p.y+=p.vy;
+      if(p.x<0)p.x=W;if(p.x>W)p.x=0;
+      if(p.y<0)p.y=H;if(p.y>H)p.y=0;
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();
+    });
+    pts.forEach((a,i)=>pts.slice(i+1).forEach(b=>{
+      const d=Math.hypot(a.x-b.x,a.y-b.y);
+      if(d<110){ctx.strokeStyle=`rgba(0,238,255,${.07*(1-d/110)})`;ctx.lineWidth=.4;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();}
+    }));
+    requestAnimationFrame(draw);
+  };
+  draw();
+})();
+
+// ======================================================
+// DB
+// ======================================================
+const DB={
+  _p:'dxo3_',
+  g(k){try{return JSON.parse(localStorage.getItem(this._p+k));}catch{return null;}},
+  s(k,v){localStorage.setItem(this._p+k,JSON.stringify(v));},
+  d(k,v){if(this.g(k)===null)this.s(k,v);}
+};
+DB.d('pass','admin123');
+DB.d('apis',[]);
+DB.d('bases',[]);
+DB.d('users',[]);
+DB.d('stats',{total:0,success:0,failed:0});
+DB.d('logs',[]);
+DB.d('cfg',{name:'DARKXOSINT',owner:'@CyberXylus',powered:'API Powered By @CyberXylus'});
+
+// ======================================================
+// STATE
+// ======================================================
+let CUR=null,ROLE='admin';
+
+// ======================================================
+// LOGIN
+// ======================================================
+function setRole(r){
+  ROLE=r;
+  document.getElementById('tab-admin').classList.toggle('active',r==='admin');
+  document.getElementById('tab-user').classList.toggle('active',r==='user');
+  ge('lg-err').style.display='none';
+}
+
+ge('lkey').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+
+function doLogin(){
+  const key=ge('lkey').value.trim();
+  const err=ge('lg-err');
+  err.style.display='none';
+
+  if(!key){showErr('Please enter your passkey.');return;}
+
+  if(ROLE==='admin'){
+    if(key===DB.g('pass')){
+      CUR={role:'admin',name:'Admin'};
+      startApp();
+    } else {
+      showErr('Wrong admin passkey. Default: admin123');
+    }
+  } else {
+    const users=DB.g('users')||[];
+    const u=users.find(x=>x.key===key&&x.active);
+    if(!u){showErr('Invalid or revoked key.');return;}
+    if(u.expiry&&new Date(u.expiry)<new Date()){showErr('Key expired.');return;}
+    if(u.plan==='hits'&&u.hitsUsed>=(u.hitsAllowed||0)){showErr('Hit limit reached.');return;}
+    CUR={role:'user',name:u.username,data:u};
+    startApp();
+  }
+}
+
+function showErr(msg){
+  const e=ge('lg-err');
+  e.textContent='⚠ '+msg;e.style.display='block';
+  ge('lkey').focus();
+}
+
+function startApp(){
+  ge('login-page').style.display='none';
+  ge('app').style.display='block';
+  ge('sb-user').textContent=(CUR.role==='admin'?'👑 ADMIN':'👤 ')+CUR.name;
+  ge('admin-nav').style.display=CUR.role==='admin'?'block':'none';
+  ge('st-host').textContent=window.location.origin;
+  checkKV();
+  renderOV();
+  lg('[INFO] Logged in: '+CUR.name+' ('+CUR.role+')');
+}
+
+function doLogout(){
+  CUR=null;ROLE='admin';
+  ge('app').style.display='none';
+  ge('login-page').style.display='flex';
+  ge('lkey').value='';
+  ge('lg-err').style.display='none';
+  ge('tab-admin').classList.add('active');
+  ge('tab-user').classList.remove('active');
+}
+
+// ======================================================
+// KV CHECK
+// ======================================================
+async function checkKV(){
+  try{
+    const r=await fetch('/api/kv-check');
+    if(r.ok){
+      const d=await r.json();
+      const on=d.kv===true;
+      const c=on?'kv-on':'kv-off';
+      ge('kv-ind').className='kv-pill '+c;
+      ge('kv-ind').textContent=on?'KV: ACTIVE':'KV: LOCAL';
+      ge('kv-st-badge').className='kv-pill '+c;
+      ge('kv-st-badge').textContent=on?'CONNECTED':'NOT CONNECTED';
+      ge('kv-st-text').textContent=on?'Status: Vercel KV connected — persistent cloud storage':'Status: Using localStorage (browser-only)';
+      ge('st-stg').textContent=on?'Vercel KV':'localStorage';
+    }
+  }catch(e){}
+}
+
+// ======================================================
+// NAVIGATION
+// ======================================================
+const PAGE_T={overview:'System Overview',apis:'My APIs',create:'Create API',analytics:'Analytics',users:'Users & Keys','base-apis':'Base APIs',settings:'Settings'};
+
+function nav(el){
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');
+  showPage(el.dataset.page);
+}
+function navTo(pg){
+  document.querySelectorAll('.ni').forEach(n=>n.classList.toggle('active',n.dataset.page===pg));
+  showPage(pg);
+}
+function showPage(pg){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const el=ge('page-'+pg);if(el)el.classList.add('active');
+  ge('tb-title').textContent=PAGE_T[pg]||pg;
+  if(pg==='overview')renderOV();
+  if(pg==='apis')renderAPIs();
+  if(pg==='analytics')renderAN();
+  if(pg==='users')renderUsers();
+  if(pg==='base-apis')renderBases();
+  if(pg==='create')loadBaseOpts();
+  if(pg==='settings')loadSettings();
+}
+
+// ======================================================
+// OVERVIEW
+// ======================================================
+function renderOV(){
+  const apis=myAPIs();
+  const st=DB.g('stats')||{};
+  const users=DB.g('users')||[];
+  const act=apis.filter(a=>a.active).length;
+  const cfg=DB.g('cfg')||{};
+  const slug=(cfg.name||'DARKXOSINT').toLowerCase();
+  const base=window.location.origin;
+
+  se('s-a',apis.length);se('s-as',act+' active · '+(apis.length-act)+' off');
+  se('s-r',(st.total||0).toLocaleString());
+  se('s-rs',(st.success||0).toLocaleString()+' ok · '+(st.failed||0).toLocaleString()+' err');
+  const rate=st.total>0?Math.round(st.success/st.total*100):0;
+  se('s-sr',rate+'%');
+  se('s-u',users.filter(u=>u.active).length);
+
+  ge('ov-tb').innerHTML=apis.slice(0,8).map(a=>`
+    <tr>
+      <td><span style="font-weight:700">${a.name}</span></td>
+      <td><span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--cyan)">${base}/${slug}/${a.endpoint}?${a.param}=VALUE</span></td>
+      <td><span style="font-family:'Share Tech Mono',monospace">${(a.requests||0).toLocaleString()}</span></td>
+      <td>
+        <div class="prog" style="width:65px;display:inline-block;margin-right:5px;vertical-align:middle">
+          <div class="prog-f" style="width:${a.requests?Math.min(100,Math.round((a.success||0)/a.requests*100)):0}%"></div>
+        </div>
+        <span style="font-size:11px">${a.requests?Math.round((a.success||0)/a.requests*100):0}%</span>
+      </td>
+      <td><span class="bdg bdg-${a.active?'on':'off'}">${a.active?'Active':'Off'}</span></td>
+    </tr>
+  `).join('')||'<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">No APIs yet. Create your first one!</td></tr>';
+
+  const logs=DB.g('logs')||[];
+  ge('log-box').innerHTML=logs.slice(-25).reverse().map(l=>`<span style="color:${l.t==='ok'?'var(--green)':l.t==='err'?'var(--red)':'var(--muted)'}">${l.m}</span><br>`).join('');
+}
+
+// ======================================================
+// APIS
+// ======================================================
+function myAPIs(){
+  const all=DB.g('apis')||[];
+  if(!CUR||CUR.role==='admin') return all;
+  return all.filter(a=>a.createdBy===CUR.name);
+}
+
+function renderAPIs(){
+  const apis=myAPIs();
+  se('api-lbl',apis.length+' APIs');
+  renderList(apis);
+}
+
+function renderList(apis){
+  const cfg=DB.g('cfg')||{};
+  const slug=(cfg.name||'DARKXOSINT').toLowerCase();
+  const base=window.location.origin;
+  const isAdmin=CUR&&CUR.role==='admin';
+  const el=ge('apis-list');
+
+  if(!apis.length){
+    el.innerHTML='<div class="card" style="text-align:center;padding:34px;color:var(--muted)">No APIs. <span style="color:var(--cyan);cursor:pointer" onclick="navTo(\'create\')">Create your first →</span></div>';
+    return;
+  }
+
+  el.innerHTML=apis.map((a,i)=>{
+    const fullURL=`${base}/${slug}/${a.endpoint}?${a.param}=VALUE`;
+    return `<div class="api-card ${a.active?'':'off'}">
+      <div style="display:flex;align-items:flex-start;gap:13px;flex-wrap:wrap">
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:5px">
+            <span class="api-name">${a.name}</span>
+            <span class="bdg bdg-${a.active?'on':'off'}">${a.active?'Active':'Disabled'}</span>
+            ${a.poweredBy?'<span class="bdg bdg-cy">⚡ Powered</span>':''}
+            ${a.replaceCredit?'<span class="bdg bdg-pu">🔁 Credit</span>':''}
+            ${a.hideFields?'<span class="bdg bdg-ye">🙈 Hidden</span>':''}
+          </div>
+          <div class="url-box" onclick="cpURL(this,'${fullURL}')">
+            <span>${fullURL}</span><span class="ci">📋</span>
+          </div>
+          <div class="api-meta">
+            <span>📊 ${(a.requests||0).toLocaleString()} reqs</span>
+            <span style="color:var(--green)">✅ ${(a.success||0).toLocaleString()}</span>
+            <span style="color:var(--red)">❌ ${(a.failed||0).toLocaleString()}</span>
+            ${a.rateLimit?`<span style="color:var(--yellow)">⏱ ${a.rateLimit}/hr</span>`:''}
+            ${a.dailyLimit?`<span style="color:var(--purple)">📅 ${a.dailyLimit}/day</span>`:''}
+          </div>
+        </div>
+        <div class="act-r" style="flex-shrink:0">
+          <button class="ib ib-c" onclick="testAPI(${i})">▶ Test</button>
+          <button class="ib ib-p" onclick="showKey(${i})">🔑 Key</button>
+          <button class="ib ib-y" onclick="editAPI(${i})">✏ Edit</button>
+          <button class="ib ib-g" onclick="togAPI(${i})">${a.active?'⏸':'▶'}</button>
+          ${isAdmin?`<button class="ib ib-r" onclick="delAPI(${i})">🗑</button>`:''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function searchAPIs(q){
+  renderList(myAPIs().filter(a=>a.name.toLowerCase().includes(q.toLowerCase())||a.endpoint.toLowerCase().includes(q.toLowerCase())));
+}
+
+// ======================================================
+// CREATE API
+// ======================================================
+function togShow(id,show){ge(id).style.display=show?'block':'none';}
+
+function loadBaseOpts(){
+  const bases=DB.g('bases')||[];
+  const sel=ge('c-base');
+  sel.innerHTML='<option value="">— Or use custom URL —</option>';
+  bases.forEach(b=>{const o=document.createElement('option');o.value=b.id;o.textContent=b.name+' — '+b.desc;sel.appendChild(o);});
+  const canUse=CUR&&(CUR.role==='admin'||(CUR.data&&CUR.data.allowBase));
+  ge('base-sel-wrap').style.display=canUse&&bases.length?'block':'none';
+}
+
+function createAPI(){
+  const name=gv('c-name'),ep=gv('c-ep').toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+  const param=gv('c-param'),url=gv('c-url'),baseId=gv('c-base');
+  if(!name)return toast('Enter API name','err');
+  if(!ep)return toast('Enter endpoint slug','err');
+  if(!param)return toast('Enter parameter name','err');
+  if(!url&&!baseId)return toast('Enter Base URL or select a Base API','err');
+
+  const apis=DB.g('apis')||[];
+  if(apis.find(a=>a.endpoint===ep))return toast('"'+ep+'" already exists','err');
+
+  let resolvedURL=url;
+  if(baseId&&!url){const b=(DB.g('bases')||[]).find(x=>x.id===baseId);if(b)resolvedURL=b.url;}
+
+  apis.push({
+    id:Date.now(),name,endpoint:ep,param,url:resolvedURL,baseApiId:baseId||null,
+    rateLimit:parseInt(gv('c-rate'))||1000,dailyLimit:parseInt(gv('c-daily'))||0,cacheTTL:parseInt(gv('c-cache'))||300,
+    replaceCredit:ck('c-rep'),replaceFields:gv('c-rf'),replaceWith:gv('c-rv')||'@CyberXylus',
+    poweredBy:ck('c-pw'),hideFields:ck('c-hf'),hiddenFields:gv('c-hfv'),
+    disabledMsg:gv('c-dm')||'This API is currently disabled.',
+    active:true,requests:0,success:0,failed:0,
+    createdBy:CUR.name,
+    apiKey:genShort(),
+    createdAt:new Date().toISOString()
+  });
+  DB.s('apis',apis);
+  lg('[OK] API created: '+name,'ok');
+  toast('API "'+name+'" created!');
+  ['c-name','c-ep','c-param','c-url','c-rate','c-daily','c-cache','c-hfv','c-rf','c-rv','c-dm'].forEach(id=>{const e=ge(id);if(e)e.value='';});
+  ge('c-pw').checked=true;ge('c-rep').checked=false;ge('c-hf').checked=false;
+  togShow('c-rep-opts',false);togShow('c-hf-opts',false);
+  navTo('apis');
+}
+
+// ======================================================
+// API ACTIONS
+// ======================================================
+function togAPI(i){
+  const apis=DB.g('apis')||[];
+  apis[i].active=!apis[i].active;
+  DB.s('apis',apis);
+  toast(apis[i].active?'API enabled':'API disabled');renderAPIs();
+}
+
+function delAPI(i){
+  if(!confirm('Delete this API?'))return;
+  const apis=DB.g('apis')||[];apis.splice(i,1);DB.s('apis',apis);
+  toast('Deleted');renderAPIs();
+}
+
+function testAPI(i){
+  const apis=DB.g('apis')||[];const a=apis[i];
+  if(!a.active){toast('API is disabled','err');return;}
+  const v=prompt('Test value for "'+a.param+'":');if(v===null)return;
+  const st=DB.g('stats')||{};
+  st.total++;st.success++;a.requests=(a.requests||0)+1;a.success=(a.success||0)+1;
+  DB.s('apis',apis);DB.s('stats',st);
+  const cfg=DB.g('cfg')||{};
+  let resp={status:'success',[a.param]:v,data:{result:'Test response for: '+v}};
+  if(a.poweredBy)resp.powered_by=cfg.powered||'API Powered By @CyberXylus';
+  if(a.replaceCredit)resp.credit=a.replaceWith||'@CyberXylus';
+  if(a.hideFields&&a.hiddenFields)a.hiddenFields.split(',').map(f=>f.trim()).forEach(f=>{if(f&&resp[f]!==undefined)delete resp[f];});
+  alert('Test Response:\n\n'+JSON.stringify(resp,null,2));
+  lg('[TEST] '+a.name+' | '+a.param+'='+v,'ok');
+}
+
+function showKey(i){
+  const apis=DB.g('apis')||[];const a=apis[i];
+  const cfg=DB.g('cfg')||{};
+  const slug=(cfg.name||'DARKXOSINT').toLowerCase();
+  const base=window.location.origin;
+  const fullURL=`${base}/${slug}/${a.endpoint}?${a.param}=VALUE`;
+  ge('m-key-body').innerHTML=`
+    <div style="margin-bottom:15px">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:6px">API Key for <strong style="color:var(--cyan)">${a.name}</strong></div>
+      <div class="key-box">${a.apiKey}</div>
+      <button class="ib ib-p" style="margin-top:6px" onclick="cp('${a.apiKey}')">📋 Copy Key</button>
+    </div>
+    <div style="margin-bottom:15px">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Full Endpoint URL</div>
+      <div class="key-box" style="color:var(--cyan);font-size:11px">${fullURL}</div>
+      <button class="ib ib-c" style="margin-top:6px" onclick="cp('${fullURL}')">📋 Copy Full URL</button>
+    </div>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);line-height:2.1;border-top:1px solid var(--border);padding-top:11px">
+      Rate: ${a.rateLimit}/hr &nbsp;|&nbsp; Daily: ${a.dailyLimit||'Unlimited'} &nbsp;|&nbsp; Cache: ${a.cacheTTL}s<br>
+      Powered By: ${a.poweredBy?'✅':'❌'} &nbsp;|&nbsp; Replace Credit: ${a.replaceCredit?'✅':'❌'} &nbsp;|&nbsp; Hide Fields: ${a.hideFields?'✅':'❌'}<br>
+      Created: ${new Date(a.createdAt).toLocaleString()}
+    </div>`;
+  openModal('m-key');
+}
+
+function editAPI(i){
+  const a=(DB.g('apis')||[])[i];
+  sv('c-name',a.name);sv('c-ep',a.endpoint);sv('c-param',a.param);sv('c-url',a.url||'');
+  sv('c-rate',a.rateLimit||'');sv('c-daily',a.dailyLimit||'');sv('c-cache',a.cacheTTL||'');
+  sv('c-rf',a.replaceFields||'');sv('c-rv',a.replaceWith||'');sv('c-hfv',a.hiddenFields||'');sv('c-dm',a.disabledMsg||'');
+  ge('c-rep').checked=a.replaceCredit;ge('c-pw').checked=a.poweredBy;ge('c-hf').checked=a.hideFields;
+  togShow('c-rep-opts',a.replaceCredit);togShow('c-hf-opts',a.hideFields);
+  navTo('create');toast('Editing "'+a.name+'" — modify and click Create');
+}
+
+// ======================================================
+// ANALYTICS
+// ======================================================
+function renderAN(){
+  const st=DB.g('stats')||{};
+  se('an-t',(st.total||0).toLocaleString());se('an-s',(st.success||0).toLocaleString());se('an-f',(st.failed||0).toLocaleString());
+  const apis=myAPIs().filter(a=>a.requests>0).sort((a,b)=>b.requests-a.requests).slice(0,10);
+  const mx=Math.max(...apis.map(a=>a.requests),1);
+  ge('an-bars').innerHTML=apis.map(a=>`
+    <div class="bar-item">
+      <div class="bar-h"><span class="bar-n">${a.name}</span><span class="bar-v">${a.requests.toLocaleString()}</span></div>
+      <div class="prog"><div class="prog-f" style="width:${Math.round(a.requests/mx*100)}%"></div></div>
+    </div>
+  `).join('')||'<div style="color:var(--muted);font-size:12px">No data yet</div>';
+  const logs=DB.g('logs')||[];
+  ge('an-log').innerHTML=logs.slice(-20).reverse().map(l=>`<span style="color:${l.t==='ok'?'var(--green)':l.t==='err'?'var(--red)':'var(--muted)'}">${l.m}</span><br>`).join('')||'<span style="color:var(--muted)">No activity</span>';
+}
+
+// ======================================================
+// USERS
+// ======================================================
+function renderUsers(){
+  const users=DB.g('users')||[];
+  const el=ge('users-list');
+  if(!users.length){el.innerHTML='<div class="card" style="text-align:center;padding:28px;color:var(--muted)">No users yet.</div>';return;}
+  el.innerHTML=users.map((u,i)=>`
+    <div class="u-card">
+      <div class="u-av">${u.username[0].toUpperCase()}</div>
+      <div class="u-info">
+        <div class="u-name">${u.username}</div>
+        <div class="u-meta">Key: <span style="color:var(--cyan)">${u.key}</span> | ${u.plan} | ${u.plan==='hits'?u.hitsUsed+'/'+(u.hitsAllowed||0)+' hits':u.expiry?'Exp: '+new Date(u.expiry).toLocaleDateString():'Lifetime'} | Daily: ${u.dailyLimit||'∞'} | Base: ${u.allowBase?'✅':'❌'}</div>
+      </div>
+      <div style="margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:5px">
+        <span class="bdg bdg-${u.active?'on':'off'}">${u.active?'Active':'Revoked'}</span>
+        <div class="act-r">
+          <button class="ib ib-p" onclick="cp('${u.key}')">📋</button>
+          <button class="ib ib-${u.active?'r':'g'}" onclick="togUser(${i})">${u.active?'Revoke':'Activate'}</button>
+          <button class="ib ib-r" onclick="delUser(${i})">🗑</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function onKT(){ge('u-cw').style.display=gv('u-kt')==='cx'?'block':'none';}
+function onPT(){
+  const p=gv('u-plan');
+  ge('u-dw').style.display=['monthly','days'].includes(p)?'block':'none';
+  ge('u-hw').style.display=p==='hits'?'block':'none';
+}
+
+function createUser(){
+  const name=gv('u-name');if(!name)return toast('Enter username','err');
+  const kt=gv('u-kt'),plan=gv('u-plan');
+  const dur=parseInt(gv('u-dur'))||30,hits=parseInt(gv('u-hits'))||1000,dlim=parseInt(gv('u-dl'))||0;
+  let key=kt==='r5'?genShort():kt==='rl'?genLong():gv('u-ck').trim()||genShort();
+  const users=DB.g('users')||[];
+  if(users.find(u=>u.key===key))return toast('Key exists','err');
+  let expiry=null;
+  if(plan==='monthly'){const d=new Date();d.setDate(d.getDate()+30);expiry=d.toISOString();}
+  if(plan==='days'){const d=new Date();d.setDate(d.getDate()+dur);expiry=d.toISOString();}
+  users.push({username:name,key,plan,expiry,hitsAllowed:hits,hitsUsed:0,dailyLimit:dlim,allowBase:ck('u-base'),active:true,createdAt:new Date().toISOString()});
+  DB.s('users',users);closeModal('m-user');
+  toast('User "'+name+'" — Key: '+key);lg('[INFO] User: '+name+' key='+key);renderUsers();
+}
+
+function togUser(i){const users=DB.g('users')||[];users[i].active=!users[i].active;DB.s('users',users);toast(users[i].active?'Activated':'Revoked');renderUsers();}
+function delUser(i){if(!confirm('Delete user?'))return;const users=DB.g('users')||[];users.splice(i,1);DB.s('users',users);renderUsers();toast('Deleted');}
+
+// ======================================================
+// BASE APIS
+// ======================================================
+function renderBases(){
+  const bases=DB.g('bases')||[];const el=ge('base-list');
+  if(!bases.length){el.innerHTML='<div class="card" style="text-align:center;padding:28px;color:var(--muted)">No base APIs yet.</div>';return;}
+  el.innerHTML=bases.map((b,i)=>`
+    <div class="card" style="border-left:3px solid var(--purple);margin-bottom:9px">
+      <div style="display:flex;align-items:center;gap:13px;flex-wrap:wrap">
+        <div style="flex:1">
+          <div style="font-family:'Orbitron',monospace;font-weight:700;font-size:13px;margin-bottom:2px">${b.name}</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:3px">${b.desc}</div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted)">ID: <span style="color:var(--purple)">${b.id}</span> | Param: <span style="color:var(--cyan)">${b.param}</span> | <span style="color:var(--red)">🔒 URL: PRIVATE</span></div>
+        </div>
+        <div class="act-r">
+          <button class="ib ib-y" onclick="revealBase(${i})">👁 URL</button>
+          <button class="ib ib-r" onclick="delBase(${i})">🗑</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function addBase(){
+  const n=gv('ba-n'),id=gv('ba-i').toLowerCase().replace(/\s+/g,'-'),u=gv('ba-u'),d=gv('ba-d'),p=gv('ba-p');
+  if(!n||!id||!u||!p)return toast('Fill all fields','err');
+  const bases=DB.g('bases')||[];bases.push({name:n,id,url:u,desc:d,param:p,createdAt:new Date().toISOString()});
+  DB.s('bases',bases);closeModal('m-base');toast('Base API added!');renderBases();lg('[INFO] Base API: '+n);
+}
+function revealBase(i){const b=(DB.g('bases')||[])[i];alert('Private URL:\n\n'+b.url);}
+function delBase(i){if(!confirm('Delete?'))return;const b=DB.g('bases')||[];b.splice(i,1);DB.s('bases',b);renderBases();}
+
+// ======================================================
+// SETTINGS
+// ======================================================
+function loadSettings(){
+  const cfg=DB.g('cfg')||{};
+  sv('st-nm',cfg.name||'DARKXOSINT');sv('st-ow',cfg.owner||'@CyberXylus');sv('st-pw',cfg.powered||'API Powered By @CyberXylus');
+}
+function saveSettings(){DB.s('cfg',{name:gv('st-nm'),owner:gv('st-ow'),powered:gv('st-pw')});toast('Settings saved!');}
+function changePass(){
+  const cur=gv('st-cp'),nw=gv('st-np');
+  if(cur!==DB.g('pass'))return toast('Wrong passkey','err');
+  if(!nw)return toast('Enter new passkey','err');
+  DB.s('pass',nw);toast('Passkey updated!');sv('st-cp','');sv('st-np','');
+}
+
+// ======================================================
+// MODALS
+// ======================================================
+function openModal(id){ge(id).classList.add('open');}
+function closeModal(id){ge(id).classList.remove('open');}
+document.querySelectorAll('.modal-ov').forEach(m=>{m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');});});
+
+// ======================================================
+// UTILS
+// ======================================================
+function genShort(){
+  const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  return Array.from({length:5},()=>c[Math.floor(Math.random()*c.length)]).join('');
+}
+function genLong(){
+  const c='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  return 'DXO-'+Array.from({length:28},()=>c[Math.floor(Math.random()*c.length)]).join('');
+}
+function cp(t){
+  navigator.clipboard.writeText(t).then(()=>toast('Copied!')).catch(()=>{
+    const x=document.createElement('textarea');x.value=t;document.body.appendChild(x);x.select();document.execCommand('copy');document.body.removeChild(x);toast('Copied!');
+  });
+}
+function cpURL(el,url){el.classList.add('copying');setTimeout(()=>el.classList.remove('copying'),300);cp(url);}
+function toast(msg,type='ok'){
+  document.querySelectorAll('.toast').forEach(t=>t.remove());
+  const t=document.createElement('div');t.className='toast'+(type==='err'?' err':'');
+  t.textContent=(type==='err'?'⚠ ':'✓ ')+msg;document.body.appendChild(t);
+  setTimeout(()=>t.remove(),3000);
+}
+function lg(m,t='info'){
+  const logs=DB.g('logs')||[];const ts=new Date().toLocaleTimeString();
+  logs.push({m:'['+ts+'] '+m,t});if(logs.length>100)logs.splice(0,logs.length-100);DB.s('logs',logs);
+}
+function ge(id){return document.getElementById(id);}
+function se(id,v){const e=ge(id);if(e)e.textContent=v;}
+function gv(id){const e=ge(id);return e?e.value.trim():'';}
+function sv(id,v){const e=ge(id);if(e)e.value=v;}
+function ck(id){const e=ge(id);return e?e.checked:false;}
+</script>
+</body>
+</html>
