@@ -1,0 +1,16 @@
+{
+  "name": "darkxosint",
+  "version": "2.0.0",
+  "description": "DARKXOSINT - Advanced API Gateway & Masking Panel by @CyberXylus",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve .",
+    "dev": "npx vercel dev"
+  },
+  "engines": {
+    "node": "18.x"
+  },
+  "keywords": ["api", "gateway", "osint", "masking", "proxy"],
+  "author": "@CyberXylus",
+  "license": "MIT"
+}
