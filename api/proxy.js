@@ -1,39 +1,52 @@
-const CACHE = new Map();
-const CACHE_TTL = 300000; // 5 minutes
-const TIMEOUT = 5000; // 5 second upstream timeout
+export const config = {
+  runtime: 'edge',
+};
 
-export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=60');
-  
+const CACHE = caches.default;
+const UPSTREAM = 'https://rootx-osint.in'; // Never exposed
+
+export default async function handler(req) {
   if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
+    return new Response(null, {
+      status: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, OPTIONS',
+      },
+    });
   }
 
   try {
-    const { type, key, query } = req.query;
+    const url = new URL(req.url);
+    const type = url.searchParams.get('type');
+    const key = url.searchParams.get('key');
+    const query = url.searchParams.get('query');
+
     if (!type || !key || !query) {
-      return res.status(400).json({ error: 'Missing parameters' });
+      return new Response(JSON.stringify({ error: 'Missing parameters' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      });
     }
 
-    const cacheKey = `${type}|${key}|${query}`;
-    const cached = CACHE.get(cacheKey);
-    if (cached && Date.now() - cached.time < CACHE_TTL) {
-      return res.status(200).json(cached.data);
+    // Sanitize inputs to prevent injection
+    const safeType = type.replace(/[^a-zA-Z]/g, '');
+    const safeKey = key.replace(/[^a-zA-Z0-9_@.-]/g, '');
+    const safeQuery = query.replace(/[^0-9]/g, '');
+
+    const cacheKey = new Request(`https://cache/?t=${safeType}&k=${safeKey}&q=${safeQuery}`);
+    const cached = await CACHE.match(cacheKey);
+    if (cached) return cached;
+
+    const upstream = `${UPSTREAM}/?type=${safeType}&key=${safeKey}&query=${safeQuery}`;
+    const response = await fetch(upstream);
+
+    if (!response.ok) {
+      throw new Error();
     }
-
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), TIMEOUT);
-
-    const response = await fetch(`https://rootx-osint.in/?type=${type}&key=${key}&query=${query}`, {
-      signal: controller.signal,
-      headers: { 'Accept-Encoding': 'gzip' }
-    });
-    clearTimeout(timeout);
 
     const text = await response.text();
+
     const cleaned = text
       .replace(/"req_left":\d+,?/g, '')
       .replace(/"req_total":\d+,?/g, '')
@@ -42,11 +55,22 @@ export default async function handler(req, res) {
       .replace(/,}/g, '}')
       .replace(/{,/g, '{');
 
-    const data = JSON.parse(cleaned);
-    CACHE.set(cacheKey, { data, time: Date.now() });
-    
-    return res.status(200).json(data);
+    const result = new Response(cleaned, {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=60',
+      },
+    });
+
+    await CACHE.put(cacheKey, result.clone());
+    return result;
   } catch (error) {
-    return res.status(500).json({ error: 'Request failed' });
+    // Generic error - never expose upstream details
+    return new Response(JSON.stringify({ error: 'Service temporarily unavailable' }), {
+      status: 503,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+    });
   }
 }
