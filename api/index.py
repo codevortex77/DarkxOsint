@@ -18,30 +18,31 @@ def get_cached_response(cache_key):
 def set_cache(cache_key, data):
     cache[cache_key] = (data, time.time())
 
-def clean_response(data):
-    """Clean the response and add credit"""
+def clean_response(data, top_level=True):
     if isinstance(data, dict):
-        # Create new dict without unwanted fields
         cleaned = {}
+
         for key, value in data.items():
-            # Skip unwanted fields
             if key in ['req_left', 'req_total', 'expiry', 'developer']:
                 continue
-            # Replace @simpleguy444 with @RichUniversal
+
             if isinstance(value, str):
                 cleaned[key] = value.replace('@simpleguy444', '@RichUniversal')
-            elif isinstance(value, (dict, list)):
-                cleaned[key] = clean_response(value)
             else:
-                cleaned[key] = value
-        
-        # Add Credit
-        cleaned['Credit'] = '@RichUniversal'
+                cleaned[key] = clean_response(value, False)
+
+        # Add Credit only to the root object
+        if top_level:
+            cleaned["Credit"] = "@RichUniversal"
+
         return cleaned
+
     elif isinstance(data, list):
-        return [clean_response(item) for item in data]
+        return [clean_response(item, False) for item in data]
+
     elif isinstance(data, str):
         return data.replace('@simpleguy444', '@RichUniversal')
+
     return data
 
 @app.route('/api', methods=['GET'])
